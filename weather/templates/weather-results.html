@@ -1,0 +1,22 @@
+<section>
+    <div class="container-fluid sect-A">
+        <div class="row">
+            <div class="col-md-12 col-A">
+                <h2>Weather App</h2>
+                <form action="/results" method="get">
+                    <div class="form-group">
+                        <label for="results">Results</label></br>
+                        {{data['clouds']}}
+                        <br>
+                        {{data['main']['humidity']}}
+                        <br>
+                        {{ weather[0]['main']}}
+                        {% for w in weather %}
+                        {{w['main']}}
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
