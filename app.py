@@ -4,15 +4,23 @@ import tornado.ioloop
 import tornado.web
 import tornado.log
 import json
-
 import requests
+import datetime
 
 from jinja2 import \
     Environment, PackageLoader, select_autoescape
 
+from models import Weather
+
+from dotenv import load_dotenv
+
+load_dotenv('.env')
+
 ENV = Environment(
     loader=PackageLoader('weather', 'templates'),
     autoescape=select_autoescape(['html', 'xml']))
+
+APPID = os.environ.get('OPENWEATHER_APPID')
 
 
 class TemplateHandler(tornado.web.RequestHandler):
@@ -29,34 +37,37 @@ class MainHandler(TemplateHandler):
 
 
 class WeatherDisplay(TemplateHandler):
-    # def get(self):
-    #     self.set_header('Cache-Control',
-    #                     'no-store, no-cache, must-revalidate, max-age=0')
-    #     self.render_template("weather-results.html", data)
-
     def post(self):
         city = self.get_body_argument('city')
-        # print(city)
-        url = "http://api.openweathermap.org/data/2.5/weather"
 
-        querystring = {"APPID": "2b9465868a2cbea01eb629a79c177df3", "q": city}
+        # if this requst < 15 minutes then pull from cache
 
-        headers = {
-            'authorization': "Basic Og==",
-            'cache-control': "no-cache",
-            'postman-token': "067b17ec-0564-a426-78a0-562598093b66"
-        }
+        elapsed = datetime.datetime.utcnow() - datetime.timedelta(minutes=15)
 
-        response = requests.request(
-            "GET", url, headers=headers, params=querystring)
+        # call database to get most recent data for city
+        try:
+            data = Weather.select().where(Weather.city == city).where(
+                Weather.created >= elapsed).get()
+        except:
+            # call API
+            url = "http://api.openweathermap.org/data/2.5/weather"
 
-        data = json.loads(response.text)
-        print(data)
+            querystring = {"APPID": APPID, "q": city, "units": "imperial"}
 
-        # render the weather data
-        self.render_template("weather-results.html",
-                             {'data': data,
-                              'weather': data['weather']})
+            headers = {
+                'authorization': "Basic Og==",
+                'cache-control': "no-cache",
+                'postman-token': "067b17ec-0564-a426-78a0-562598093b66"
+            }
+
+            response = requests.request(
+                "GET", url, headers=headers, params=querystring)
+
+            data = Weather.create(city=city, weather_data=response.json())
+
+        self.render_template("weather-results.html", {
+            'data': data,
+        })
 
 
 def make_app():

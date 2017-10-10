@@ -6,14 +6,18 @@
                 <form action="/results" method="get">
                     <div class="form-group">
                         <label for="results">Results</label></br>
-                        {{data['clouds']}}
+                        {{data}}
                         <br>
-                        {{data['main']['humidity']}}
-                        <br>
-                        {{ weather[0]['main']}}
-                        {% for w in weather %}
-                        {{w['main']}}
-                        {% endfor %}
+                        <p>Sky Condition: {{ data.weather_data.weather[0]['main']}}</p>
+                        <p>Sky Condition:</p>
+                        {% with main =  data.weather_data.main %}
+                        <p>Temperature: {{main['temp']}}</p>
+                            <ul>
+                                <li>Low: {{main['temp_min']}}</li>
+                                <li>High: {{main['temp_max']}}</li>
+                            </ul>
+                        <p>Humidity: {{main['humidity']}}%</p>
+                        {% endwith %}
                     </div>
                 </form>
             </div>
